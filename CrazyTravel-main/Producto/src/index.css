@@ -1,0 +1,753 @@
+/* =========================================
+   1. RESETEO DE BORDES BLANCOS (El fix mágico)
+========================================= */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden; /* Evita scroll horizontal accidental */
+  font-family: Inter, system-ui, sans-serif;
+  color: #0f172a;
+  background: #f8fafc; /* <--- ¡AQUÍ ESTÁ EL CAMBIO! Fondo clarito para el resto de la web */
+}
+
+#root {
+  width: 100%;
+  
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* =========================================
+   2. DISEÑO PREMIUM: CATÁLOGO DE VIAJES
+========================================= */
+
+/* Fondo de la página completa con el avión */
+.page-background {
+  background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=2000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding: 4rem 2rem;
+}
+
+/* Títulos del Header */
+.page-title {
+  font-size: 2.75rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
+}
+
+.page-subtitle {
+  color: #e2e8f0;
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Grilla de Tarjetas */
+.tours-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2.5rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.tour-card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
+}
+
+.tour-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); /* Sombra un poco más fuerte para destacar sobre el fondo oscuro */
+}
+
+/* Imagen de la tarjeta */
+.tour-image-container {
+  position: relative;
+  overflow: hidden;
+  height: 240px;
+}
+
+.tour-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tour-card:hover .tour-image {
+  transform: scale(1.1);
+}
+
+.tour-image-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 30%);
+}
+
+/* Etiquetas (Badge) */
+.badge-status {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Contenido de la tarjeta */
+.card-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.btn-tour {
+  padding: 0.75rem 1.5rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-tour:hover:not(:disabled) {
+  background-color: #334155;
+  transform: scale(1.03);
+}
+
+.btn-tour:disabled {
+  background-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   3. PÁGINA DE INICIO (HOME)
+========================================= */
+
+/* Banner gigante a pantalla completa */
+.hero-section {
+  position: relative;
+  height: 75vh; /* Ocupa el 75% del alto de la pantalla */
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 2rem;
+  /* Imagen de fondo con un degradado oscuro para leer bien el texto */
+  background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+}
+
+.hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem); /* Se adapta al tamaño de la pantalla */
+  font-weight: 900;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.hero-subtitle {
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  color: #e2e8f0;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero-btn {
+  padding: 1rem 2.5rem;
+  background-color: #0f766e;
+  color: #ffffff;
+  border-radius: 9999px; /* Botón totalmente redondeado */
+  font-size: 1.125rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.hero-btn:hover {
+  background-color: #0d9488;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Sección de "Por qué elegirnos" */
+/* Sección de "Por qué elegirnos" con Fondo de Puntos Sutil */
+.features-section {
+  padding: 5rem 2rem;
+  background-color: #f8fafc;
+  /* El truco mágico: Crea un patrón de puntos grises muy tenues */
+  background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+  background-size: 24px 24px; /* Espaciado entre los puntos */
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background-color: #ffffff;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  border: 1px solid #f1f5f9;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+}
+
+/* =========================================
+   4. SECCIÓN DE TESTIMONIOS (HOME)
+========================================= */
+.testimonials-section {
+  padding: 5rem 2rem;
+  background-color: #ffffff; /* Fondo blanco para contrastar con la sección anterior */
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testimonial-card {
+  background-color: #f8fafc;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+.testimonial-stars {
+  color: #fbbf24; /* Color amarillo oro para las estrellas */
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  letter-spacing: 2px;
+}
+
+.testimonial-quote {
+  font-style: italic;
+  color: #475569;
+  line-height: 1.7;
+  flex-grow: 1; /* Empuja el perfil hacia abajo si el texto es corto */
+  margin-bottom: 2rem;
+}
+
+.testimonial-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+}
+
+.testimonial-avatar {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #cbd5e1;
+}
+
+.testimonial-info h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.testimonial-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* =========================================
+   5. SECCIÓN FINAL (CTA - Call to Action)
+========================================= */
+.cta-section {
+  padding: 5rem 2rem;
+  background-color: #0f766e; /* Un verde/azulado elegante y llamativo */
+  color: #ffffff;
+  text-align: center;
+}
+
+.cta-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.cta-btn-final {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  background-color: #ffffff;
+  color: #0f766e;
+  border-radius: 9999px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  margin-top: 2rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.cta-btn-final:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* =========================================
+   6. PÁGINA QUIÉNES SOMOS (ABOUT)
+========================================= */
+.about-header {
+  position: relative;
+  height: 40vh; /* Un poco más bajo que el del Home */
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* Degradado oscuro sobre la imagen del equipo */
+  background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+  padding: 0 2rem;
+}
+
+.about-header h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.about-container {
+  max-width: 900px;
+  margin: -4rem auto 5rem; /* El margen negativo hace que la caja "suba" y flote sobre el fondo */
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.about-content {
+  background-color: #ffffff;
+  padding: 3rem;
+  border-radius: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+}
+
+.about-content p {
+  font-size: 1.125rem;
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.about-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Grilla de Valores */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.value-card {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.3s ease;
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+}
+
+.value-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.value-card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.value-card p {
+  font-size: 0.95rem !important; /* Sobrescribe el tamaño del párrafo padre */
+  line-height: 1.5 !important;
+}
+
+/* =========================================
+   7. NAVBAR Y FOOTER
+========================================= */
+
+/* --- Navbar Minimalista Animado --- */
+.navbar {
+  background-color: #0f172a;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); /* Sombra súper suave */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: #cbd5e1; /* Gris medio */
+  text-decoration: none;
+  font-weight: 600;
+  position: relative; /* Necesario para la animación */
+  padding-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #1df916;
+}
+
+/* La magia de la línea animada */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #14b8a6;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-btn {
+  background-color: #0f766e;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  background-color: #0d9488;
+  transform: translateY(-2px); /* Se levanta un poquito al pasar el mouse */
+}
+
+/* --- Footer Premium --- */
+.footer-premium {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 4rem 2rem 2rem;
+  margin-top: auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-bottom: 3rem;
+}
+
+.footer-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.footer-text {
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #38bdf8; /* Un azul claro al pasar el mouse */
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid #1e293b;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* =========================================
+   8. FORMULARIOS DE AUTENTICACIÓN (LOGIN/REG)
+========================================= */
+
+/* Título principal y subtítulo */
+.auth-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+/* Etiquetas de los campos (Label) */
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Campos de entrada de texto (Inputs) */
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 1rem;
+  color: #0f172a;
+  transition: all 0.2s ease;
+  box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0f766e; /* Cambia al verde de la agencia */
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1); /* Brillo sutil verde */
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Botón principal (Verde Crazy Travel) */
+.btn-auth-submit {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  border: none;
+  background-color: #0f766e; /* El verde de la agencia */
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-auth-submit:hover {
+  background-color: #0d9488; /* Un verde un poco más claro al pasar el mouse */
+}
+
+.btn-auth-submit:active {
+  transform: scale(0.99); /* Efecto de "presionado" */
+}
+
+.btn-auth-submit:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Enlaces (¿Olvidaste contraseña?, Regístrate) */
+.auth-link {
+  font-size: 0.875rem;
+  color: #0f172a;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-link:hover {
+  color: #0f766e; /* Verde al pasar el mouse */
+  text-decoration: underline;
+}
+
+/* Botón de Google premium */
+.btn-auth-google {
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.btn-auth-google:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Alerta de error */
+.auth-error-alert {
+  padding: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+/* =========================================
+   9. CONTENEDORES DE PANTALLA (LOGIN/REG)
+========================================= */
+
+.auth-page-wrapper {
+  min-height: 100vh;
+  width: 100%; /* ← Sin el 100vw */
+  margin: 0;   /* ← Sin el truco del margin negativo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=2000&q=80');  background-position: center;
+  background-attachment: fixed;
+}
+
+/* La tarjeta blanca central */
+.auth-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 480px; /* Ancho máximo para que no se estire de más */
+  padding: 2.5rem;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Ajuste responsivo para celulares */
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 1.5rem;
+  }
+}
