@@ -2,45 +2,77 @@ import { useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// ─── Datos Simulados (Mock Data Extendida) ──────────────────────────────────
-const MOCK_TOUR_DETAIL = {
-  id: '1',
-  title: 'Aventura Mágica en Chiloé',
-  destination: 'Chiloé, Chile',
-  price: 350000,
-  days: 5,
-  nights: 4,
-  imageUrl: 'https://www.tipicochileno.cl/wp-content/uploads/2011/05/palafitos-de-chiloe-B.png',
-  spots: 12,
-  description: 'Descubre la magia, mitos y leyendas de la Isla Grande de Chiloé. Un viaje diseñado para conectarte con la naturaleza, la gastronomía local y la arquitectura patrimonial en un entorno seguro y guiado por expertos.',
-  includes: [
-    '🚌 Transporte en bus semi-cama exclusivo',
-    '🏨 Alojamiento en hotel céntrico (4 noches)',
-    '🍳 Desayuno y cena incluidos',
-    '🚶‍♂️ Trekking y caminatas de oxigenación guiadas',
-    '⛴️ Cruce en transbordador al continente'
-  ],
-  itinerary: [
-    { day: 1, title: 'Salida y Cruce', description: '20:00 hrs: Salida desde punto de encuentro. Viaje nocturno con destino a Pargua para tomar el transbordador al amanecer.' },
-    { day: 2, title: 'Llegada y Tour por Castro', description: '10:00 hrs: Llegada al hotel. 15:00 hrs: Tour por los palafitos de Castro y la Iglesia San Francisco. Noche bohemia opcional.' },
-    { day: 3, title: 'Parque Nacional Chiloé', description: '09:00 hrs: Trekking por los senderos del Parque Nacional. Tarde libre para disfrutar de la gastronomía local.' }
-  ]
-};
+// ─── Datos Simulados (Lista de Tours) ───────────────────────────────────────
+const MOCK_TOURS = [
+  {
+    id: '1', // El ID 1 será para Chiloé
+    title: 'Aventura Mágica en Chiloé',
+    destination: 'Chiloé, Chile',
+    price: 350000,
+    days: 5,
+    nights: 4,
+    imageUrl: 'https://www.tipicochileno.cl/wp-content/uploads/2011/05/palafitos-de-chiloe-B.png',
+    spots: 12,
+    description: 'Descubre la magia, mitos y leyendas de la Isla Grande de Chiloé. Un viaje diseñado para conectarte con la naturaleza, la gastronomía local y la arquitectura patrimonial en un entorno seguro y guiado por expertos.',
+    includes: [
+      '🚌 Transporte en bus semi-cama exclusivo',
+      '🏨 Alojamiento en hotel céntrico (4 noches)',
+      '🍳 Desayuno y cena incluidos',
+      '🚶‍♂️ Trekking y caminatas de oxigenación guiadas',
+      '⛴️ Cruce en transbordador al continente'
+    ],
+    itinerary: [
+      { day: 1, title: 'Salida y Cruce', description: '20:00 hrs: Salida desde punto de encuentro. Viaje nocturno con destino a Pargua para tomar el transbordador al amanecer.' },
+      { day: 2, title: 'Llegada y Tour por Castro', description: '10:00 hrs: Llegada al hotel. 15:00 hrs: Tour por los palafitos de Castro y la Iglesia San Francisco. Noche bohemia opcional.' },
+      { day: 3, title: 'Parque Nacional Chiloé', description: '09:00 hrs: Trekking por los senderos del Parque Nacional. Tarde libre para disfrutar de la gastronomía local.' }
+    ]
+  },
+  {
+    id: '2', // El ID 2 será para Búzios
+    title: 'Vacaciones de Ensueño en Búzios',
+    destination: 'Búzios, Brasil',
+    price: 850000,
+    days: 7,
+    nights: 6,
+    imageUrl: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/02/23/c5/76/praia-joao-fernandes.jpg?w=900&h=500&s=1', // Imagen de playa referencial
+    spots: 5,
+    description: 'Relájate en las paradisíacas playas de Búzios, la península más encantadora de Brasil. Disfruta del sol, aguas cristalinas, paseos en goleta y la vibrante vida nocturna en la famosa Rua das Pedras.',
+    includes: [
+      '✈️ Vuelos ida y vuelta (Tasas incluidas)',
+      '🚐 Traslados Aeropuerto - Hotel - Aeropuerto',
+      '🏨 Alojamiento en Pousada a pasos de la playa (6 noches)',
+      '🍳 Desayuno buffet tropical diario',
+      '⛵ Paseo en Goleta por las playas principales con caipirinha de cortesía'
+    ],
+    itinerary: [
+      { day: 1, title: 'Vuelo y Llegada al Paraíso', description: 'Vuelo AM hacia Río de Janeiro. Traslado directo a Búzios y check-in en la Pousada. Tarde libre para reconocer el sector.' },
+      { day: 2, title: 'Navegación en Goleta', description: '10:00 hrs: Zarpamos para recorrer las playas de João Fernandes, Tartaruga y Azeda. Tarde libre.' },
+      { day: 3, title: 'Día Libre y Rua das Pedras', description: 'Día a tu propio ritmo para disfrutar de la playa. En la noche, recorrido recomendado por los restaurantes y tiendas de Rua das Pedras.' }
+    ]
+  }
+];
 
 export default function TourDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // 🔴 Agrega esto temporalmente para que ESLint deje de quejarse de que no usas el 'id'
-  console.log("El cliente está viendo el tour con ID:", id);
-
-  // En un proyecto real, usaríamos el 'id' para buscar el viaje en Supabase
-  const tour = MOCK_TOUR_DETAIL; 
+  // 1. Buscamos en la lista el viaje que coincida con el ID de la URL
+  const tour = MOCK_TOURS.find((viaje) => viaje.id === id); 
 
   // Esto hace que la página empiece desde arriba al cargar
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // 2. Si el cliente pone un ID que no existe (ej: /viaje/99), le mostramos un error amigable
+  if (!tour) {
+    return (
+      <div style={{ padding: '100px', textAlign: 'center' }}>
+        <h2>Viaje no encontrado 😢</h2>
+        <button onClick={() => navigate(-1)} style={flyerButtonStyle}>Volver al catálogo</button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -90,7 +122,7 @@ export default function TourDetail() {
           {/* Itinerario */}
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '22px', color: '#0f172a', margin: 0 }}>Itinerario</h2>
+              <h2 style={{ fontSize: '22px', color: '#0f172a', margin: 0 }}>Itinerario resumido</h2>
               <button style={flyerButtonStyle}>
                 📄 Descargar Flyer (PDF)
               </button>
