@@ -155,9 +155,12 @@ export default function TourDetail() {
               <span style={{ fontWeight: '600' }}>{tour.days} Días, {tour.nights} Noches</span>
             </div>
 
-            <button style={bookButtonStyle}>
-              Reservar Cupos Ahora
-            </button>
+            <button 
+              style={bookButtonStyle}
+              onClick={() => navigate(`/reservar/${tour.id}`)}
+            >
+            Reservar Cupos Ahora
+          </button>
             <p style={{ textAlign: 'center', color: '#64748b', fontSize: '12px', marginTop: '12px', marginBottom: 0 }}>
               Serás redirigido para configurar tu grupo.
             </p>

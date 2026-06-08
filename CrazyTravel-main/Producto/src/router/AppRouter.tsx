@@ -18,7 +18,7 @@ import Viajes from '../pages/client/Viajes';
 import TourDetail from '../pages/client/TourDetail';
 import Profile from '../pages/client/Profile'; // 🔴 Importación agregada
 import About from '../pages/client/About';     // 🔴 Importación agregada
-
+import Reserva from '../pages/client/Reserva';
 // ─── Guardianes de Ruta ──────────────────────────────────────────────────────
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, profileLoading } = useAuth();
@@ -70,6 +70,7 @@ export default function AppRouter() {
         <Route path="/tour/:id" element={<TourDetail />} />
         <Route path="/perfil" element={<Profile />} />
         <Route path="/quienes-somos" element={<About />} />
+        <Route path="/reservar/:id" element={<Reserva />} /> {/* 🔴 Agrega esta línea */}
       </Route>
 
       {/* 🔵 ZONA PÚBLICA (Formularios de Autenticación) */}
