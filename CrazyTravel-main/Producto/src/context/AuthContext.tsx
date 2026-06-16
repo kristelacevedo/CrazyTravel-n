@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfileLoading(true);
 
       const { data, error } = await supabase
-        .from('profiles')
+        .from('perfiles') // CAMBIO REALIZADO AQUÍ
         .select('role')
         .eq('id', user.id)
         .single();
