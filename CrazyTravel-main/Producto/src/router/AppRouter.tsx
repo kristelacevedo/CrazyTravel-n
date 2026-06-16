@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { AdminDashboard } from '../pages/admin/AdminDashboard';
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
 import AuthLayout from '../layouts/AuthLayout';
@@ -16,9 +17,10 @@ import AuthCallback from '../pages/auth/AuthCallback';
 import Home from '../pages/client/Home'; 
 import Viajes from '../pages/client/Viajes';
 import TourDetail from '../pages/client/TourDetail';
-import Profile from '../pages/client/Profile'; // 🔴 Importación agregada
-import About from '../pages/client/About';     // 🔴 Importación agregada
+import Profile from '../pages/client/Profile'; 
+import About from '../pages/client/About';     
 import Reserva from '../pages/client/Reserva';
+
 // ─── Guardianes de Ruta ──────────────────────────────────────────────────────
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, profileLoading } = useAuth();
@@ -57,7 +59,7 @@ export default function AppRouter() {
   return (
     <Routes>
       
-      {/* 🟢 ZONA PROTEGIDA CLIENTES (Layout Principal con Navbar) */}
+      {/* 🟢 ZONA PROTEGIDA CLIENTES (Layout Principal con Navbar de Cliente) */}
       <Route
         element={
           <ProtectedRoute>
@@ -70,8 +72,18 @@ export default function AppRouter() {
         <Route path="/tour/:id" element={<TourDetail />} />
         <Route path="/perfil" element={<Profile />} />
         <Route path="/quienes-somos" element={<About />} />
-        <Route path="/reservar/:id" element={<Reserva />} /> {/* 🔴 Agrega esta línea */}
+        <Route path="/reservar/:id" element={<Reserva />} />
       </Route>
+
+      {/* 👑 ZONA PROTEGIDA ADMINISTRADOR (Independiente y sin Navbar de Cliente) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
 
       {/* 🔵 ZONA PÚBLICA (Formularios de Autenticación) */}
       <Route
