@@ -18,8 +18,9 @@ export interface FullProfileData {
 export const profileService = {
   // Obtiene los datos cruzando las tablas
   async getFullProfile(userId: string) {
+    // 🔴 CAMBIADO: 'profiles' por 'perfiles'
     const { data: profile, error: pError } = await supabase
-      .from('profiles')
+      .from('perfiles')
       .select('first_name, last_name, phone')
       .eq('id', userId)
       .single();
@@ -62,12 +63,11 @@ export const profileService = {
     };
   },
 
-  // Guarda garantizando que no existan duplicados (Usa las IDs existentes si se encuentran)
-  // Guarda garantizando cero duplicados apoyándose en las restricciones UNIQUE de la BD
+  // Guarda garantizando que no existan duplicados
   async saveFullProfile(userId: string, data: FullProfileData) {
-    // 1. Actualizar tabla 'profiles'
+    // 🔴 CAMBIADO: 'profiles' por 'perfiles'
     const { error: pError } = await supabase
-      .from('profiles')
+      .from('perfiles')
       .update({
         first_name: data.first_name,
         last_name: data.last_name,
@@ -87,7 +87,7 @@ export const profileService = {
         rut: data.rut,
         passport: data.passport,
         birth_date: data.birth_date
-      }, { onConflict: 'user_id' }) // 🔴 La magia está aquí
+      }, { onConflict: 'user_id' })
       .select('id')
       .single();
 
