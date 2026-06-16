@@ -6,8 +6,10 @@ export interface FullProfileData {
   phone: string;
   middle_name?: string;
   second_last_name?: string;
-  rut: string;
-  passport?: string;
+  rut?: string | null; // Modificado para aceptar null si es extranjero
+  passport?: string | null;
+  nacionalidad?: string; // 🔴 Nuevo campo
+  tipo_documento?: string; // 🔴 Nuevo campo
   birth_date: string;
   food_preference?: string;
   allergies?: string;
@@ -18,10 +20,10 @@ export interface FullProfileData {
 export const profileService = {
   // Obtiene los datos cruzando las tablas
   async getFullProfile(userId: string) {
-    // 🔴 CAMBIADO: 'profiles' por 'perfiles'
+    // 🔴 Agregamos nacionalidad y tipo_documento al select
     const { data: profile, error: pError } = await supabase
       .from('perfiles')
-      .select('first_name, last_name, phone')
+      .select('first_name, last_name, phone, nacionalidad, tipo_documento')
       .eq('id', userId)
       .single();
 
@@ -51,6 +53,8 @@ export const profileService = {
       first_name: profile?.first_name || '',
       last_name: profile?.last_name || '',
       phone: profile?.phone || '',
+      nacionalidad: profile?.nacionalidad || 'Chilena', // 🔴 Retornamos el valor
+      tipo_documento: profile?.tipo_documento || 'RUT', // 🔴 Retornamos el valor
       middle_name: passenger?.middle_name || '',
       second_last_name: passenger?.second_last_name || '',
       rut: passenger?.rut || '',
@@ -65,13 +69,15 @@ export const profileService = {
 
   // Guarda garantizando que no existan duplicados
   async saveFullProfile(userId: string, data: FullProfileData) {
-    // 🔴 CAMBIADO: 'profiles' por 'perfiles'
+    // 🔴 Guardamos la nacionalidad y tipo de documento en 'perfiles'
     const { error: pError } = await supabase
       .from('perfiles')
       .update({
         first_name: data.first_name,
         last_name: data.last_name,
-        phone: data.phone
+        phone: data.phone,
+        nacionalidad: data.nacionalidad,
+        tipo_documento: data.tipo_documento
       })
       .eq('id', userId);
 
