@@ -6,9 +6,11 @@ import { profileService } from '../../services/profile.service';
 import type { FullProfileData } from '../../services/profile.service';
 import { formatRut, validateRut } from '../../lib/validators/rut';
 
-// 🔴 1. Creamos un tipo específico para el formulario que incluye nuestra variable de control visual
+// 🔴 Agregamos los campos de nacionalidad y tipo de documento
 interface PersonalDataForm extends FullProfileData {
   has_allergies_radio: 'si' | 'no';
+  nacionalidad?: string;
+  tipo_documento?: string;
 }
 
 const capitalize = (text: string) => {
@@ -26,48 +28,51 @@ export default function PersonalData() {
     register,
     handleSubmit,
     setValue,
-    control, // 🔴 Agregamos control y quitamos watch
+    control,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<PersonalDataForm>({
     defaultValues: { 
       food_preference: 'Ninguna',
-      has_allergies_radio: 'no'
+      has_allergies_radio: 'no',
+      tipo_documento: 'RUT' // Por defecto
     }
   });
 
-  // 🔴 2. Observamos la variable de radio button sin usar 'any' y la usamos para mostrar/ocultar el input
-  // 🔴 Usamos useWatch, que es más rápido y compatible con el nuevo React
-  const hasAllergiesRadio = useWatch({
-    control,
-    name: 'has_allergies_radio',
-  });
+  const hasAllergiesRadio = useWatch({ control, name: 'has_allergies_radio' });
+  const tipoDocumentoActual = watch('tipo_documento'); // Observamos si es RUT o Pasaporte
 
   useEffect(() => {
     async function loadData() {
       if (!user?.id) return;
       try {
         setFetching(true);
+        // Asumimos que getFullProfile ahora también trae nacionalidad y tipo_documento
         const data = await profileService.getFullProfile(user.id);
         
-        setValue('first_name', data.first_name);
+        setValue('first_name', data.first_name || '');
         setValue('middle_name', data.middle_name || '');
-        setValue('last_name', data.last_name);
+        setValue('last_name', data.last_name || '');
         setValue('second_last_name', data.second_last_name || '');
-        setValue('rut', data.rut);
+        
+        // 🔴 Cargar nuevos campos de extranjero
+        setValue('nacionalidad', data.nacionalidad || 'Chilena');
+        setValue('tipo_documento', data.tipo_documento || 'RUT');
+        
+        setValue('rut', data.rut || '');
         setValue('passport', data.passport || '');
-        setValue('birth_date', data.birth_date);
+        setValue('birth_date', data.birth_date || '');
         
         const cleanPhone = data.phone?.startsWith('9') ? data.phone.slice(1) : data.phone;
-        setValue('phone', cleanPhone);
+        setValue('phone', cleanPhone || '');
         
         setValue('food_preference', data.food_preference || 'Ninguna');
         setValue('allergies', data.allergies || '');
-        setValue('emergency_name', data.emergency_name);
+        setValue('emergency_name', data.emergency_name || '');
         
         const cleanEmergencyPhone = data.emergency_phone?.startsWith('9') ? data.emergency_phone.slice(1) : data.emergency_phone;
-        setValue('emergency_phone', cleanEmergencyPhone);
+        setValue('emergency_phone', cleanEmergencyPhone || '');
         
-        // Lógica inteligente: Si ya tenía alergias guardadas, marcamos el radio en "Sí"
         if (data.allergies && data.allergies.trim() !== '') {
           setValue('has_allergies_radio', 'si');
         } else {
@@ -89,20 +94,21 @@ export default function PersonalData() {
     loadData();
   }, [user?.id, setValue]);
 
-  // 🔴 1. Definimos un tipo para el payload que sea más flexible o simplemente quitamos el any
   const onSubmit = async (formData: PersonalDataForm) => {
     if (!user?.id) return;
     setGlobalMsg({ type: '', text: '' });
 
-    // 🔴 2. Construimos el payload de forma segura
-    const payload: FullProfileData = {
+    // Armamos el payload respetando lo que el usuario ingresó
+    const payload: any = {
       first_name: formData.first_name,
       last_name: formData.last_name,
       phone: `9${formData.phone}`,
       middle_name: formData.middle_name || '',
       second_last_name: formData.second_last_name || '',
-      rut: formData.rut,
-      passport: formData.passport || '',
+      rut: formData.tipo_documento === 'RUT' ? formData.rut : null,
+      passport: formData.tipo_documento === 'Pasaporte' ? formData.passport : null,
+      nacionalidad: formData.nacionalidad,
+      tipo_documento: formData.tipo_documento,
       birth_date: formData.birth_date,
       food_preference: formData.food_preference || 'Ninguna',
       allergies: formData.has_allergies_radio === 'si' ? formData.allergies : '',
@@ -116,7 +122,6 @@ export default function PersonalData() {
       setIsEditing(false);
     } catch (err: unknown) {
       console.error(err);
-      // 🔴 Corregido: Verificamos si es una instancia de Error antes de acceder a .message
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido al guardar.';
       setGlobalMsg({ type: 'error', text: errorMessage });
     }
@@ -129,7 +134,7 @@ export default function PersonalData() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '2px solid #e2e8f0', paddingBottom: '12px' }}>
-        <h2 style={{ fontSize: '24px', color: '#0f172a', margin: 0 }}>Mis Datos Personales (Ficha Pasajero Frecuente)</h2>
+        <h2 style={{ fontSize: '24px', color: '#0f172a', margin: 0 }}>Mis Datos Personales (Ficha Pasajero)</h2>
         
         {!isEditing && (
           <button type="button" onClick={() => { setIsEditing(true); setGlobalMsg({ type: '', text: '' }); }} style={editButtonStyle}>
@@ -142,77 +147,58 @@ export default function PersonalData() {
         
         {/* --- SECCIÓN 1: IDENTIDAD --- */}
         <div>
-          <h3 style={subSectionTitleStyle}>1. Identidad</h3>
+          <h3 style={subSectionTitleStyle}>1. Identidad y Nacionalidad</h3>
           <div style={twoColGrid}>
             <div>
+              <label style={labelStyle}>Nacionalidad</label>
+              <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('nacionalidad')} />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Tipo de Documento</label>
+              <select disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('tipo_documento')}>
+                <option value="RUT">RUT / Carnet Chileno</option>
+                <option value="Pasaporte">Pasaporte (Extranjeros)</option>
+              </select>
+            </div>
+
+            <div>
               <label style={labelStyle}>Primer Nombre *</label>
-              <input 
-                type="text" 
-                disabled={!isEditing} 
-                style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                {...register('first_name', { 
-                  required: 'El primer nombre es obligatorio',
-                  onChange: (e) => {
-                    e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, ''));
-                  }
-                })} 
-              />
+              <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('first_name', { required: 'El primer nombre es obligatorio', onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); } })} />
               {errors.first_name && <span style={errorTextStyle}>⚠️ {errors.first_name.message}</span>}
             </div>
+            
             <div>
               <label style={labelStyle}>Segundo Nombre</label>
-              <input 
-                type="text" 
-                disabled={!isEditing} 
-                style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                {...register('middle_name', {
-                  onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); }
-                })} 
-              />
+              <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('middle_name', { onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); } })} />
             </div>
+
             <div>
               <label style={labelStyle}>Primer Apellido *</label>
-              <input 
-                type="text" 
-                disabled={!isEditing} 
-                style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                {...register('last_name', { 
-                  required: 'El apellido paterno es obligatorio',
-                  onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); }
-                })} 
-              />
+              <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('last_name', { required: 'El apellido paterno es obligatorio', onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); } })} />
               {errors.last_name && <span style={errorTextStyle}>⚠️ {errors.last_name.message}</span>}
             </div>
+
             <div>
               <label style={labelStyle}>Segundo Apellido</label>
-              <input 
-                type="text" 
-                disabled={!isEditing} 
-                style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                {...register('second_last_name', {
-                  onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); }
-                })} 
-              />
+              <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('second_last_name', { onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); } })} />
             </div>
-            <div>
-              <label style={labelStyle}>RUT / Carnet Chileno *</label>
-              <input 
-                type="text" 
-                disabled={!isEditing}
-                placeholder="Ej: 12.345.678-9" 
-                style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                {...register('rut', { 
-                  required: 'El RUT es obligatorio',
-                  validate: (value) => validateRut(value) || 'El RUT ingresado no es válido',
-                  onChange: (e) => { e.target.value = formatRut(e.target.value); }
-                })} 
-              />
-              {errors.rut && <span style={errorTextStyle}>⚠️ {errors.rut.message}</span>}
-            </div>
-            <div>
-              <label style={labelStyle}>Pasaporte (Opcional)</label>
-              <input type="text" disabled={!isEditing} placeholder="Ej: P123456789" style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('passport', { onChange: (e) => { e.target.value = e.target.value.toUpperCase(); } })} />
-            </div>
+
+            {/* 🔴 Lógica condicional: Muestra RUT o Pasaporte según la selección */}
+            {tipoDocumentoActual === 'RUT' ? (
+              <div>
+                <label style={labelStyle}>Número de RUT *</label>
+                <input type="text" disabled={!isEditing} placeholder="Ej: 12.345.678-9" style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('rut', { required: 'El RUT es obligatorio', validate: (value) => validateRut(value as string) || 'El RUT ingresado no es válido', onChange: (e) => { e.target.value = formatRut(e.target.value); } })} />
+                {errors.rut && <span style={errorTextStyle}>⚠️ {errors.rut.message}</span>}
+              </div>
+            ) : (
+              <div>
+                <label style={labelStyle}>Número de Pasaporte *</label>
+                <input type="text" disabled={!isEditing} placeholder="Ej: P123456789" style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('passport', { required: 'El pasaporte es obligatorio para extranjeros', onChange: (e) => { e.target.value = e.target.value.toUpperCase(); } })} />
+                {errors.passport && <span style={errorTextStyle}>⚠️ {errors.passport.message}</span>}
+              </div>
+            )}
+
             <div>
               <label style={labelStyle}>Fecha de Nacimiento *</label>
               <input type="date" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('birth_date', { required: 'La fecha de nacimiento es obligatoria' })} />
@@ -230,18 +216,8 @@ export default function PersonalData() {
             <div>
               <label style={labelStyle}>Tu Teléfono / WhatsApp *</label>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <span style={countryCodeStyle}> Chileno 🇨🇱 +56 9 </span>
-                <input 
-                  type="text" 
-                  disabled={!isEditing}
-                  placeholder="1234 5678" 
-                  style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                  {...register('phone', { 
-                    required: 'El teléfono celular es obligatorio',
-                    pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' },
-                    onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); }
-                  })} 
-                />
+                <span style={countryCodeStyle}>+56 9</span>
+                <input type="text" disabled={!isEditing} placeholder="1234 5678" style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('phone', { required: 'El teléfono celular es obligatorio', pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' }, onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } })} />
               </div>
               {errors.phone && <span style={errorTextStyle}>⚠️ {errors.phone.message}</span>}
             </div>
@@ -270,13 +246,7 @@ export default function PersonalData() {
             {hasAllergiesRadio === 'si' && (
               <div style={{ marginTop: '12px' }}>
                 <label style={labelStyle}>Detalle de Alergias / Condiciones Médicas *</label>
-                <input 
-                  type="text" 
-                  disabled={!isEditing}
-                  placeholder="Ej: Alergia severa a los mariscos, asma crónica, etc." 
-                  style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                  {...register('allergies', { required: 'Si posee condiciones, debe detallarlas para los paramédicos del tour' })} 
-                />
+                <input type="text" disabled={!isEditing} placeholder="Ej: Alergia severa a los mariscos, asma crónica, etc." style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('allergies', { required: 'Si posee condiciones, debe detallarlas para los paramédicos del tour' })} />
                 {errors.allergies && <span style={errorTextStyle}>⚠️ {errors.allergies.message}</span>}
               </div>
             )}
@@ -297,18 +267,8 @@ export default function PersonalData() {
             <div>
               <label style={labelStyle}>Teléfono de Emergencia *</label>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <span style={countryCodeStyle}>🇨🇱 +56 9</span>
-                <input 
-                  type="text" 
-                  disabled={!isEditing}
-                  placeholder="1234 5678" 
-                  style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} 
-                  {...register('emergency_phone', { 
-                    required: 'El teléfono de emergencia es obligatorio',
-                    pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' },
-                    onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); }
-                  })} 
-                />
+                <span style={countryCodeStyle}>+56 9</span>
+                <input type="text" disabled={!isEditing} placeholder="1234 5678" style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('emergency_phone', { required: 'El teléfono de emergencia es obligatorio', pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' }, onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } })} />
               </div>
               {errors.emergency_phone && <span style={errorTextStyle}>⚠️ {errors.emergency_phone.message}</span>}
             </div>
