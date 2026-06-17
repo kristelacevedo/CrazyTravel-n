@@ -6,7 +6,7 @@ const MOCK_BOOKINGS = [
     tourName: 'Aventura Mágica en Chiloé',
     date: '15 de Noviembre, 2026',
     status: 'Pagado',
-    imageUrl: 'https://images.unsplash.com/photo-1588614959060-4d144f28b207?q=80&w=400&auto=format&fit=crop',
+    imageUrl: 'https://www.tipicochileno.cl/wp-content/uploads/2011/05/palafitos-de-chiloe-B.png',
   }
 ];
 
