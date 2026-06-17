@@ -1,43 +1,85 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { CSSProperties } from 'react';
-
-// Traemos los mismos datos
-const MOCK_TOURS = [
-  { id: '1', title: 'Aventura Mágica en Chiloé', price: 350000 },
-  { id: '2', title: 'Vacaciones de Ensueño en Búzios', price: 850000 }
-];
+import { supabase } from '../../lib/supabase'; // Asegúrate de que la ruta sea correcta
 
 export default function Reserva() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // 1. Estados de la página
   const [passengers, setPassengers] = useState(1);
-  const [isConfirmed, setIsConfirmed] = useState(false); // 🔴 ¡Nuestro nuevo interruptor!
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Para evitar doble clic
+  
+  const [tour, setTour] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Buscamos el viaje
-  const tour = MOCK_TOURS.find((t) => t.id === id);
-
-  // Que la página inicie arriba
+  // 1. Cargar el viaje al iniciar
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
 
-  if (!tour) {
-    return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Viaje no encontrado</h2>;
-  }
+    async function fetchTour() {
+      if (!id) return;
+      const { data, error } = await supabase.from('tours').select('*').eq('id', id).single();
+      if (!error && data) setTour(data);
+      setLoading(false);
+    }
+    fetchTour();
+  }, [id]);
 
-  const total = tour.price * passengers;
+  if (loading) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Cargando detalles de la reserva...</h2>;
+  if (!tour) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Viaje no encontrado 😢</h2>;
 
-  // 2. Función que se ejecuta al hacer clic en Confirmar
-  const handleConfirm = () => {
-    // En el futuro, aquí enviaremos los datos a Supabase.
-    // Por ahora, solo encendemos el mensaje de éxito.
-    setIsConfirmed(true);
+  const total = (tour.precio || 0) * passengers;
+
+  // 2. Procesar la reserva y enviarla a Supabase
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    try {
+      // Obtenemos al usuario conectado
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        alert("Debes iniciar sesión para poder reservar.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Preparamos los datos exactamente como los pide tu tabla SQL
+      const nuevaReserva = {
+        perfil_id: session.user.id,
+        tour_id: tour.id,
+        cantidad_pasajeros: passengers,
+        total_pagado: total,
+        estado: 'pendiente'
+      };
+
+      // Insertamos en la base de datos
+      const { error } = await supabase.from('reservas').insert([nuevaReserva]);
+
+      if (error) {
+        console.error("Error de Supabase:", error);
+        // Si hay un error de llave foránea, es probable que el usuario no exista en la tabla 'perfiles'
+        if (error.code === '23503') {
+          alert("Error: Tu perfil de usuario está incompleto en la base de datos.");
+        } else {
+          alert("Hubo un problema al guardar la reserva. Revisa la consola.");
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ¡Éxito!
+      setIsConfirmed(true);
+
+    } catch (err) {
+      console.error("Error inesperado:", err);
+      alert("Ocurrió un error inesperado.");
+      setIsSubmitting(false);
+    }
   };
 
-  // 3. 🟢 SI LA RESERVA ESTÁ CONFIRMADA: Mostramos esta pantalla de éxito
+  // 🟢 PANTALLA DE ÉXITO
   if (isConfirmed) {
     return (
       <div style={containerStyle}>
@@ -47,17 +89,17 @@ export default function Reserva() {
             ¡Reserva Confirmada!
           </h2>
           <p style={{ fontSize: '18px', color: '#475569', marginBottom: '32px', lineHeight: '1.5' }}>
-            Tu viaje a <strong>{tour.title}</strong> para {passengers} persona(s) ha sido registrado con éxito. Te hemos enviado un correo con los detalles para el pago.
+            Tu viaje a <strong>{tour.titulo}</strong> para {passengers} persona(s) ha sido registrado con éxito.
           </p>
-          <button onClick={() => navigate('/perfil')} style={confirmButtonStyle}>
-            Ir a mi Perfil
+          <button onClick={() => navigate('/viajes')} style={confirmButtonStyle}>
+            Volver al catálogo
           </button>
         </div>
       </div>
     );
   }
 
-  // 🔴 SI NO ESTÁ CONFIRMADA: Mostramos el formulario normal
+  // 🔴 PANTALLA DE FORMULARIO
   return (
     <div style={containerStyle}>
       <button onClick={() => navigate(-1)} style={backButtonStyle}>
@@ -65,11 +107,9 @@ export default function Reserva() {
       </button>
 
       <div style={cardStyle}>
-        <h1 style={{ fontSize: '24px', marginBottom: '8px', color: '#0f172a' }}>
-          Finaliza tu reserva
-        </h1>
+        <h1 style={{ fontSize: '24px', marginBottom: '8px', color: '#0f172a' }}>Finaliza tu reserva</h1>
         <p style={{ color: '#64748b', marginBottom: '24px' }}>
-          Estás reservando: <strong>{tour.title}</strong>
+          Estás reservando: <strong>{tour.titulo}</strong>
         </p>
 
         <div style={formSection}>
@@ -77,8 +117,16 @@ export default function Reserva() {
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button onClick={() => setPassengers(Math.max(1, passengers - 1))} style={stepperButton}>-</button>
             <span style={{ fontSize: '18px', fontWeight: 'bold', width: '30px', textAlign: 'center' }}>{passengers}</span>
-            <button onClick={() => setPassengers(passengers + 1)} style={stepperButton}>+</button>
+            <button 
+              onClick={() => setPassengers(Math.min(tour.cupos_totales, passengers + 1))} 
+              style={{ ...stepperButton, opacity: passengers >= tour.cupos_totales ? 0.5 : 1 }}
+            >
+              +
+            </button>
           </div>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
+            Cupos disponibles: {tour.cupos_totales}
+          </p>
         </div>
 
         <hr style={dividerStyle} />
@@ -90,9 +138,12 @@ export default function Reserva() {
           </span>
         </div>
 
-        {/* Le agregamos el onClick a nuestro botón */}
-        <button style={confirmButtonStyle} onClick={handleConfirm}>
-          Confirmar Reserva
+        <button 
+          style={{ ...confirmButtonStyle, opacity: isSubmitting ? 0.7 : 1 }} 
+          onClick={handleConfirm}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Procesando...' : 'Confirmar Reserva'}
         </button>
       </div>
     </div>
