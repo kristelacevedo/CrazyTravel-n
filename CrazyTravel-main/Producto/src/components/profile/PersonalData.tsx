@@ -24,6 +24,10 @@ export default function PersonalData() {
   const [isEditing, setIsEditing] = useState(false);
   const [globalMsg, setGlobalMsg] = useState({ type: '', text: '' });
 
+  // 🌍 Nuevos estados para los códigos de país
+  const [codigoPais, setCodigoPais] = useState('+56');
+  const [codigoEmergencia, setCodigoEmergencia] = useState('+56');
+
   const {
     register,
     handleSubmit,
@@ -47,7 +51,6 @@ export default function PersonalData() {
       if (!user?.id) return;
       try {
         setFetching(true);
-        // Asumimos que getFullProfile ahora también trae nacionalidad y tipo_documento
         const data = await profileService.getFullProfile(user.id);
         
         setValue('first_name', data.first_name || '');
@@ -55,23 +58,39 @@ export default function PersonalData() {
         setValue('last_name', data.last_name || '');
         setValue('second_last_name', data.second_last_name || '');
         
-        // 🔴 Cargar nuevos campos de extranjero
+        // Cargar nuevos campos de extranjero
         setValue('nacionalidad', data.nacionalidad || 'Chilena');
         setValue('tipo_documento', data.tipo_documento || 'RUT');
-        
         setValue('rut', data.rut || '');
         setValue('passport', data.passport || '');
         setValue('birth_date', data.birth_date || '');
-        
-        const cleanPhone = data.phone?.startsWith('9') ? data.phone.slice(1) : data.phone;
-        setValue('phone', cleanPhone || '');
-        
         setValue('food_preference', data.food_preference || 'Ninguna');
         setValue('allergies', data.allergies || '');
         setValue('emergency_name', data.emergency_name || '');
         
-        const cleanEmergencyPhone = data.emergency_phone?.startsWith('9') ? data.emergency_phone.slice(1) : data.emergency_phone;
-        setValue('emergency_phone', cleanEmergencyPhone || '');
+        // 🌍 Lógica Inteligente: Cargar Teléfono Personal
+        const rawPhone = data.phone || '';
+        if (rawPhone.includes(' ')) {
+          // Si ya es formato nuevo internacional (Ej: "+54 112345678")
+          const [code, ...numberParts] = rawPhone.split(' ');
+          setCodigoPais(code);
+          setValue('phone', numberParts.join(''));
+        } else {
+          // Si es formato antiguo de la BD (Ej: "912345678")
+          setCodigoPais('+56');
+          setValue('phone', rawPhone); 
+        }
+
+        // 🌍 Lógica Inteligente: Cargar Teléfono de Emergencia
+        const rawEmerg = data.emergency_phone || '';
+        if (rawEmerg.includes(' ')) {
+          const [code, ...numberParts] = rawEmerg.split(' ');
+          setCodigoEmergencia(code);
+          setValue('emergency_phone', numberParts.join(''));
+        } else {
+          setCodigoEmergencia('+56');
+          setValue('emergency_phone', rawEmerg);
+        }
         
         if (data.allergies && data.allergies.trim() !== '') {
           setValue('has_allergies_radio', 'si');
@@ -98,11 +117,11 @@ export default function PersonalData() {
     if (!user?.id) return;
     setGlobalMsg({ type: '', text: '' });
 
-    // Armamos el payload respetando lo que el usuario ingresó
+    // Armamos el payload guardando el código del país + un espacio + el número
     const payload: any = {
       first_name: formData.first_name,
       last_name: formData.last_name,
-      phone: `9${formData.phone}`,
+      phone: `${codigoPais} ${formData.phone}`, 
       middle_name: formData.middle_name || '',
       second_last_name: formData.second_last_name || '',
       rut: formData.tipo_documento === 'RUT' ? formData.rut : null,
@@ -113,7 +132,7 @@ export default function PersonalData() {
       food_preference: formData.food_preference || 'Ninguna',
       allergies: formData.has_allergies_radio === 'si' ? formData.allergies : '',
       emergency_name: formData.emergency_name,
-      emergency_phone: formData.emergency_phone ? `9${formData.emergency_phone}` : ''
+      emergency_phone: formData.emergency_phone ? `${codigoEmergencia} ${formData.emergency_phone}` : ''
     };
     
     try {
@@ -184,7 +203,7 @@ export default function PersonalData() {
               <input type="text" disabled={!isEditing} style={{ ...inputStyle, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('second_last_name', { onChange: (e) => { e.target.value = capitalize(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')); } })} />
             </div>
 
-            {/* 🔴 Lógica condicional: Muestra RUT o Pasaporte según la selección */}
+            {/* Lógica condicional: Muestra RUT o Pasaporte según la selección */}
             {tipoDocumentoActual === 'RUT' ? (
               <div>
                 <label style={labelStyle}>Número de RUT *</label>
@@ -216,8 +235,30 @@ export default function PersonalData() {
             <div>
               <label style={labelStyle}>Tu Teléfono / WhatsApp *</label>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <span style={countryCodeStyle}>+56 9</span>
-                <input type="text" disabled={!isEditing} placeholder="1234 5678" style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('phone', { required: 'El teléfono celular es obligatorio', pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' }, onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } })} />
+                <select 
+                  value={codigoPais} 
+                  onChange={(e) => setCodigoPais(e.target.value)} 
+                  disabled={!isEditing}
+                  style={{ ...countryCodeStyle, padding: '0 8px', appearance: 'auto', cursor: isEditing ? 'pointer' : 'not-allowed' }}
+                >
+                  <option value="+56">🇨🇱 +56</option>
+                  <option value="+54">🇦🇷 +54</option>
+                  <option value="+51">🇵🇪 +51</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input 
+                  type="text" 
+                  disabled={!isEditing} 
+                  placeholder="Ej: 912345678" 
+                  style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} 
+                  {...register('phone', { 
+                    required: 'El teléfono celular es obligatorio', 
+                    onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } 
+                  })} 
+                />
               </div>
               {errors.phone && <span style={errorTextStyle}>⚠️ {errors.phone.message}</span>}
             </div>
@@ -267,8 +308,30 @@ export default function PersonalData() {
             <div>
               <label style={labelStyle}>Teléfono de Emergencia *</label>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <span style={countryCodeStyle}>+56 9</span>
-                <input type="text" disabled={!isEditing} placeholder="1234 5678" style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} {...register('emergency_phone', { required: 'El teléfono de emergencia es obligatorio', pattern: { value: /^[0-9]{8}$/, message: 'Deben ser exactamente los 8 números restantes' }, onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } })} />
+                <select 
+                  value={codigoEmergencia} 
+                  onChange={(e) => setCodigoEmergencia(e.target.value)} 
+                  disabled={!isEditing}
+                  style={{ ...countryCodeStyle, padding: '0 8px', appearance: 'auto', cursor: isEditing ? 'pointer' : 'not-allowed' }}
+                >
+                  <option value="+56">🇨🇱 +56</option>
+                  <option value="+54">🇦🇷 +54</option>
+                  <option value="+51">🇵🇪 +51</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input 
+                  type="text" 
+                  disabled={!isEditing} 
+                  placeholder="Ej: 912345678" 
+                  style={{ ...inputStyle, flex: 1, ...( !isEditing ? disabledInputStyle : {} ) }} 
+                  {...register('emergency_phone', { 
+                    required: 'El teléfono de emergencia es obligatorio', 
+                    onChange: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); } 
+                  })} 
+                />
               </div>
               {errors.emergency_phone && <span style={errorTextStyle}>⚠️ {errors.emergency_phone.message}</span>}
             </div>
