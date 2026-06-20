@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase'; // Asegúrate de que esta ruta sea la correcta en tu proyecto
 
-export function AdminDashboard() {
+// ✅ SOLUCIÓN 1: Agregamos "export default" para que el AdminLayout lo encuentre
+export default function AdminDashboard() {
   // Pestañas y estados
   const [activeTab, setActiveTab] = useState<'tours' | 'users'>('tours');
   const [tours, setTours] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<any>(null);
   
-  // Estado inicial del formulario adaptado a tu tabla real
+  // Estado inicial del formulario
   const [tourForm, setTourForm] = useState({
     titulo: '',
     precio: '',
@@ -52,36 +53,29 @@ export function AdminDashboard() {
   const handleSaveTour = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Preparamos los datos EXACTAMENTE como los pide tu base de datos
       const payload = {
         titulo: tourForm.titulo,
-        destino: tourForm.titulo, // Obligatorio en tu tabla
+        destino: tourForm.titulo, 
         precio: Number(tourForm.precio),
         descripcion: tourForm.descripcion || null,
         imagen_url: tourForm.imagen_url || null,
         cupos_totales: Number(tourForm.cupos_totales),
-        // Si la fecha está vacía, enviamos null para que Supabase no dé error
         fecha_salida: tourForm.fecha_salida ? tourForm.fecha_salida : null 
       };
 
       if (editingTour) {
-        // ACTUALIZAR
         const { error } = await supabase.from('tours').update(payload).eq('id', editingTour.id);
         if (error) throw error;
         alert('¡Tour actualizado con éxito!');
       } else {
-        // CREAR NUEVO
         const { error } = await supabase.from('tours').insert([payload]);
         if (error) throw error;
         alert('¡Nuevo tour publicado con éxito!');
       }
 
-      // Limpiar y cerrar modal
       setIsModalOpen(false);
       setEditingTour(null);
       setTourForm({ titulo: '', precio: '', descripcion: '', imagen_url: '', cupos_totales: '10', fecha_salida: '' });
-      
-      // Recargar la tabla
       fetchAdminData();
     } catch (err: any) {
       console.error(err);
@@ -116,138 +110,144 @@ export function AdminDashboard() {
     setIsModalOpen(true);
   };
 
-  // PANTALLA DE CARGA
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-        <p style={{ fontSize: '18px', color: '#64748b', fontWeight: 'bold' }}>⏳ Cargando Panel de Administración...</p>
+      <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '18px', color: '#64748b', fontWeight: 'bold' }}>⏳ Cargando datos...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
+    // ✅ SOLUCIÓN 2: Quitamos la barra lateral repetida y adaptamos el contenedor
+    <div style={{ padding: '32px', fontFamily: 'system-ui, sans-serif' }}>
       
-      {/* ─── BARRA LATERAL (SIDEBAR) ─── */}
-      <div style={{ width: '280px', backgroundColor: '#0f172a', color: '#94a3b8', display: 'flex', flexDirection: 'column', padding: '24px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '40px', paddingLeft: '8px' }}>
-          <span style={{ color: '#22c55e', fontSize: '18px' }}>●</span>
-          <h1 style={{ color: '#ffffff', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Crazy Travel Pro</h1>
+      {/* ─── PESTAÑAS SUPERIORES (Reemplazan la barra lateral antigua) ─── */}
+      <div style={{ display: 'flex', gap: '16px', borderBottom: '2px solid #e2e8f0', marginBottom: '32px', paddingBottom: '16px' }}>
+        <button 
+          onClick={() => setActiveTab('tours')}
+          style={{ 
+            padding: '8px 16px', 
+            backgroundColor: activeTab === 'tours' ? '#3b82f6' : 'transparent', 
+            color: activeTab === 'tours' ? '#ffffff' : '#64748b', 
+            border: 'none', 
+            borderRadius: '8px', 
+            fontWeight: 'bold', 
+            cursor: 'pointer',
+            fontSize: '15px'
+          }}
+        >
+          🌍 Gestión de Tours
+        </button>
+        <button 
+          onClick={() => setActiveTab('users')}
+          style={{ 
+            padding: '8px 16px', 
+            backgroundColor: activeTab === 'users' ? '#3b82f6' : 'transparent', 
+            color: activeTab === 'users' ? '#ffffff' : '#64748b', 
+            border: 'none', 
+            borderRadius: '8px', 
+            fontWeight: 'bold', 
+            cursor: 'pointer',
+            fontSize: '15px'
+          }}
+        >
+          👥 Control de Usuarios
+        </button>
+      </div>
+
+      {/* ─── VISTA DE TOURS ─── */}
+      {activeTab === 'tours' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 4px 0' }}>Gestión de Contenido</h2>
+              <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>Publica, modifica o elimina productos turísticos.</p>
+            </div>
+            <button 
+              onClick={() => { 
+                setEditingTour(null); 
+                setTourForm({ titulo: '', precio: '', descripcion: '', imagen_url: '', cupos_totales: '10', fecha_salida: '' });
+                setIsModalOpen(true); 
+              }}
+              style={{ backgroundColor: '#3b82f6', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}
+            >
+              + Crear Nuevo Tour
+            </button>
+          </div>
+
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>Destino / Tour</th>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>Cupos</th>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>Precio Base</th>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px', textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tours.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>No hay tours registrados aún.</td>
+                  </tr>
+                ) : (
+                  tours.map((tour) => (
+                    <tr key={tour.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '16px 24px', fontWeight: '600', color: '#1e293b' }}>{tour.titulo}</td>
+                      <td style={{ padding: '16px 24px', color: '#475569' }}>{tour.cupos_totales}</td>
+                      <td style={{ padding: '16px 24px', color: '#475569' }}>${(tour.precio || 0).toLocaleString('es-CL')}</td>
+                      <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                        <button onClick={() => openEditModal(tour)} style={{ color: '#3b82f6', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer', marginRight: '16px' }}>Editar</button>
+                        <button onClick={() => handleDeleteTour(tour.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer' }}>Eliminar</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+      )}
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-          <button 
-            onClick={() => setActiveTab('tours')}
-            style={{ padding: '12px', backgroundColor: activeTab === 'tours' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '8px', color: activeTab === 'tours' ? '#3b82f6' : '#94a3b8', cursor: 'pointer', textAlign: 'left', fontWeight: '600', fontSize: '14px' }}
-          >
-            🌍 Gestión de Tours
-          </button>
+      {/* ─── VISTA DE USUARIOS ─── */}
+      {activeTab === 'users' && (
+        <div>
+          <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 4px 0' }}>Control de Usuarios</h2>
+          <p style={{ color: '#64748b', margin: '0 0 24px 0', fontSize: '14px' }}>Lista de perfiles registrados en la base de datos.</p>
 
-          <button 
-            onClick={() => setActiveTab('users')}
-            style={{ padding: '12px', backgroundColor: activeTab === 'users' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '8px', color: activeTab === 'users' ? '#3b82f6' : '#94a3b8', cursor: 'pointer', textAlign: 'left', fontWeight: '600', fontSize: '14px' }}
-          >
-            👥 Control de Usuarios
-          </button>
-        </nav>
-      </div>
-
-      {/* ─── ÁREA PRINCIPAL ─── */}
-      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-        
-        {/* VISTA DE TOURS */}
-        {activeTab === 'tours' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <div>
-                <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 4px 0' }}>Gestión de Contenido</h2>
-                <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>Publica, modifica o elimina productos turísticos.</p>
-              </div>
-              <button 
-                onClick={() => { 
-                  setEditingTour(null); 
-                  setTourForm({ titulo: '', precio: '', descripcion: '', imagen_url: '', cupos_totales: '10', fecha_salida: '' });
-                  setIsModalOpen(true); 
-                }}
-                style={{ backgroundColor: '#3b82f6', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}
-              >
-                + Crear Nuevo Tour
-              </button>
-            </div>
-
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>Destino / Tour</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>Cupos</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>Precio Base</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>Acciones</th>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>ID Usuario</th>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>Correo Electrónico</th>
+                  <th style={{ padding: '16px 24px', color: '#475569', fontWeight: '600', fontSize: '14px' }}>Rol</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuarios.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>Cargando usuarios...</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {tours.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>No hay tours registrados aún.</td>
+                ) : (
+                  usuarios.map((u, index) => (
+                    <tr key={index} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '16px 24px', color: '#64748b', fontSize: '13px' }}>{u.id?.substring(0, 8)}...</td>
+                      <td style={{ padding: '16px 24px', fontWeight: '500', color: '#1e293b' }}>{u.email || u.correo || 'Sin correo'}</td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ backgroundColor: '#ffedd5', color: '#ea580c', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}>
+                          {u.rol || u.role || 'Cliente'}
+                        </span>
+                      </td>
                     </tr>
-                  ) : (
-                    tours.map((tour) => (
-                      <tr key={tour.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '16px 24px', fontWeight: '600', color: '#1e293b' }}>{tour.titulo}</td>
-                        <td style={{ padding: '16px 24px', color: '#475569' }}>{tour.cupos_totales}</td>
-                        <td style={{ padding: '16px 24px', color: '#475569' }}>${(tour.precio || 0).toLocaleString('es-CL')}</td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <button onClick={() => openEditModal(tour)} style={{ color: '#3b82f6', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer', marginRight: '16px' }}>Editar</button>
-                          <button onClick={() => handleDeleteTour(tour.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer' }}>Eliminar</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {/* VISTA DE USUARIOS */}
-        {activeTab === 'users' && (
-          <div>
-            <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 4px 0' }}>Control de Usuarios</h2>
-            <p style={{ color: '#64748b', margin: '0 0 24px 0', fontSize: '14px' }}>Lista de perfiles registrados en la base de datos.</p>
-
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>ID Usuario</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>Correo Electrónico</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>Rol</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuarios.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>Cargando usuarios...</td>
-                    </tr>
-                  ) : (
-                    usuarios.map((u, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '16px 24px', color: '#64748b', fontSize: '12px' }}>{u.id.substring(0, 8)}...</td>
-                        <td style={{ padding: '16px 24px', fontWeight: '500', color: '#1e293b' }}>{u.email || u.correo || 'Sin correo'}</td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{ backgroundColor: '#ffedd5', color: '#ea580c', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}>
-                            {u.rol || u.role || 'Cliente'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ─── MODAL PARA CREAR / EDITAR TOUR ─── */}
       {isModalOpen && (

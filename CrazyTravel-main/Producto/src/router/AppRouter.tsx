@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { AdminDashboard } from '../pages/admin/AdminDashboard';
+
+// ✅ ¡Aquí está el cambio! Importamos tu nuevo Layout maestro
+import AdminLayout from '../pages/admin/AdminLayout';
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
 import AuthLayout from '../layouts/AuthLayout';
@@ -75,12 +77,13 @@ export default function AppRouter() {
         <Route path="/reservar/:id" element={<Reserva />} />
       </Route>
 
-      {/* 👑 ZONA PROTEGIDA ADMINISTRADOR (Independiente y sin Navbar de Cliente) */}
+      {/* 👑 ZONA PROTEGIDA ADMINISTRADOR (Layout de Admin con su propia Barra Lateral) */}
       <Route
         path="/admin"
         element={
           <ProtectedRoute>
-            <AdminDashboard />
+            {/* ✅ Reemplazamos AdminDashboard por AdminLayout aquí */}
+            <AdminLayout />
           </ProtectedRoute>
         }
       />
