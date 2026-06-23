@@ -59,7 +59,7 @@ export default function Reserva() {
         estado: estadoPago // 'Pagado' (PayPal) o 'Pendiente' (Reservar ahora)
       };
 
-      const { error } = await supabase.from('reservas').insert([nuevaReserva]);
+      const { error } = await supabase.from('reservas').insert([nuevaReserva]); //// guarda en la base de datos, una nueva reserva. 
 
       if (error) {
         console.error("Error en Supabase:", error);
