@@ -50,7 +50,7 @@ export default function ClientLayout() {
             <ul className="footer-links">
               <li>📍 Santiago, Chile</li>
               <li>📧 hola@crazytravel.com</li>
-              <li>📱 +56 9 1234 5678</li>
+              <li>📱 +56 9 30109933</li>
             </ul>
           </div>
 

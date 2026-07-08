@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
+import { Navigate } from 'react-router-dom';
+
+// IMPORTANTE: Verifica que esta ruta hacia tu archivo supabase coincida con tus carpetas.
+// Si tu archivo de supabase está en otra carpeta, ajusta los '../'
+import { supabase } from '../../lib/supabase'; 
+
 import AdminDashboard from './AdminDashboard';
 import AdminViajes from './AdminViajes';
 import AdminReservas from './AdminReservas';
@@ -8,6 +14,59 @@ type ViewType = 'dashboard' | 'viajes' | 'reservas';
 
 export default function AdminLayout() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  
+  // 🛡️ Estado del guardia de seguridad
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  // 🛡️ Lógica de verificación
+  useEffect(() => {
+    const verificarCredenciales = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          setIsAdmin(false); // No hay sesión iniciada
+          return;
+        }
+
+        const { data: perfil, error } = await supabase
+          .from('perfiles')
+          .select('rol')
+          .eq('email', user.email)
+          .single();
+
+        if (error) throw error;
+
+        if (perfil?.rol === 'admin') {
+          setIsAdmin(true); // ¡Es administrador!
+        } else {
+          setIsAdmin(false); // Es un cliente normal
+        }
+      } catch (error) {
+        console.error("Error verificando seguridad:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    verificarCredenciales();
+  }, []);
+
+  // 🛡️ Pantalla de carga mientras el guardia revisa (dura medio segundo)
+  if (isAdmin === null) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', color: '#0f172a' }}>
+        <h2>🔒 Verificando credenciales de seguridad...</h2>
+      </div>
+    );
+  }
+
+  // 🛡️ Si no es administrador, lo pateamos a la página de login
+  // (Asegúrate de que "/auth/login" sea la ruta real de tu inicio de sesión)
+  if (isAdmin === false) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  // ─── A PARTIR DE AQUÍ ES TU CÓDIGO INTACTO ───
 
   // Función para renderizar la pantalla correcta en el lado derecho
   const renderView = () => {
