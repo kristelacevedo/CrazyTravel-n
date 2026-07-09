@@ -9,6 +9,7 @@ export default function Reserva() {
   const navigate = useNavigate();
   
   const [passengers, setPassengers] = useState(1);
+  const [acompanantes, setAcompanantes] = useState(""); // <-- NUEVO ESTADO PARA LOS ACOMPAÑANTES
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'PayPal' | 'Presencial' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +42,12 @@ export default function Reserva() {
 
   // Función genérica para guardar la reserva en Supabase
   const guardarReserva = async (estadoPago: 'Pagado' | 'Pendiente') => {
+    // Validación rápida: si son más de 1 y no escribieron acompañantes, avisa.
+    if (passengers > 1 && acompanantes.trim() === "") {
+      alert("Por favor, ingresa los datos de tus acompañantes antes de confirmar.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -56,10 +63,11 @@ export default function Reserva() {
         tour_id: tour.id,
         cantidad_pasajeros: passengers,
         total_pagado: totalCLP,
-        estado: estadoPago // 'Pagado' (PayPal) o 'Pendiente' (Reservar ahora)
+        estado: estadoPago, // 'Pagado' (PayPal) o 'Pendiente' (Reservar ahora)
+        observaciones: acompanantes // <-- GUARDAMOS LOS DATOS AQUÍ (asegúrate de tener esta columna en Supabase)
       };
 
-      const { error } = await supabase.from('reservas').insert([nuevaReserva]); //// guarda en la base de datos, una nueva reserva. 
+      const { error } = await supabase.from('reservas').insert([nuevaReserva]);
 
       if (error) {
         console.error("Error en Supabase:", error);
@@ -139,6 +147,28 @@ export default function Reserva() {
           <span style={{ fontSize: '13px', color: '#64748b', display: 'block', marginTop: '6px' }}>
             Cupos disponibles: {tour.cupos_totales}
           </span>
+
+          {/* 🔴 AQUÍ EMPIEZA EL PARCHE: CAJA DE TEXTO CONDICIONAL */}
+          {passengers > 1 && (
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ ...labelStyle, color: '#0f766e' }}>
+                Datos de los acompañantes (RUT, Nombre y Salud):
+              </label>
+              <textarea
+                style={textareaStyle}
+                rows={3}
+                placeholder="Ej: 12.345.678-9 - Juan Pérez - Alérgico a penicilina&#10;23.456.789-0 - Maria Soto - Sin observaciones"
+                value={acompanantes}
+                onChange={(e) => setAcompanantes(e.target.value)}
+                required
+              />
+              <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                * Requerido por SERNATUR para activar los seguros de viaje de cada integrante.
+              </span>
+            </div>
+          )}
+          {/* 🔴 AQUÍ TERMINA EL PARCHE */}
+
         </div>
 
         <hr style={dividerStyle} />
@@ -174,6 +204,11 @@ export default function Reserva() {
             <PayPalButtons 
               style={{ layout: "vertical", shape: "rect", color: "gold" }}
               createOrder={(data: any, actions: any) => {
+                // Validación rápida antes de abrir PayPal
+                if (passengers > 1 && acompanantes.trim() === "") {
+                  alert("Por favor, ingresa los datos de tus acompañantes antes de pagar.");
+                  return Promise.reject(new Error("Faltan acompañantes"));
+                }
                 return actions.order.create({
                   purchase_units: [
                     {
@@ -194,7 +229,7 @@ export default function Reserva() {
               }}
               onError={(err: any) => {
                 console.error("Error PayPal:", err);
-                alert("Hubo un error con el pago.");
+                alert("Hubo un error con el pago o se canceló.");
               }}
             />
           </PayPalScriptProvider>
@@ -215,3 +250,4 @@ const stepperButton: CSSProperties = { width: '40px', height: '40px', fontSize: 
 const dividerStyle: CSSProperties = { border: 'none', borderTop: '1px solid #e2e8f0', margin: '24px 0' };
 const totalSection: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' };
 const confirmButtonStyle: CSSProperties = { width: '100%', padding: '16px', backgroundColor: '#1e293b', color: '#ffffff', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' };
+const textareaStyle: CSSProperties = { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', marginTop: '8px', backgroundColor: '#f8fafc', outline: 'none' };
