@@ -25,8 +25,8 @@ export default function MyTrips() {
               imagen_url
             )
           `)
-          .eq('perfil_id', session.user.id)
-          .order('created_at', { ascending: false });
+          .eq('perfil_id', session.user.id);
+          // ⚠️ Aquí eliminamos el .order() que causaba el error 400 en Supabase
 
         if (error) throw error;
         setReservas(data || []);
