@@ -3,16 +3,16 @@ import type { CSSProperties } from 'react';
 import { Navigate } from 'react-router-dom';
 
 // IMPORTANTE: Verifica que esta ruta hacia tu archivo supabase coincida con tus carpetas.
-// Si tu archivo de supabase está en otra carpeta, ajusta los '../'
 import { supabase } from '../../lib/supabase'; 
 
 import AdminDashboard from './AdminDashboard';
 import AdminReservas from './AdminReservas';
 
-type ViewType = 'dashboard' | 'viajes' | 'reservas';
+// Solo dejamos dos vistas para que el menú sea claro y directo
+type ViewType = 'viajes' | 'reservas';
 
 export default function AdminLayout() {
-  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewType>('viajes');
   
   // 🛡️ Estado del guardia de seguridad
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -50,7 +50,7 @@ export default function AdminLayout() {
     verificarCredenciales();
   }, []);
 
-  // 🛡️ Pantalla de carga mientras el guardia revisa (dura medio segundo)
+  // 🛡️ Pantalla de carga mientras el guardia revisa
   if (isAdmin === null) {
     return (
       <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', color: '#0f172a' }}>
@@ -69,13 +69,10 @@ export default function AdminLayout() {
   // Función para renderizar la pantalla correcta en el lado derecho
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard':
-        return <AdminDashboard />;
       case 'viajes':
-        // 🚀 CORRECCIÓN: Renderiza el Dashboard (donde tienes la tabla de tours) en lugar de un componente inexistente
-        return <AdminDashboard />; 
+        return <AdminDashboard />; // Tu tabla de tours
       case 'reservas':
-        return <AdminReservas />;
+        return <AdminReservas />; // Tu tabla de pagos
       default:
         return <AdminDashboard />;
     }
@@ -92,26 +89,6 @@ export default function AdminLayout() {
         </div>
 
         <nav style={navStyle}>
-          {/* Botón: Dashboard */}
-          <button 
-            onClick={() => setCurrentView('dashboard')} 
-            style={{
-              width: '100%',
-              textAlign: 'left',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: currentView === 'dashboard' ? '#1e293b' : 'transparent',
-              color: currentView === 'dashboard' ? '#3b82f6' : '#94a3b8',
-              fontSize: '15px',
-              fontWeight: currentView === 'dashboard' ? '600' : 'normal',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            📊 Dashboard
-          </button>
-          
           {/* Botón: Viajes */}
           <button 
             onClick={() => setCurrentView('viajes')} 
