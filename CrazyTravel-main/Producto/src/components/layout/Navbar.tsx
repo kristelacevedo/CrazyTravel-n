@@ -17,8 +17,20 @@ export default function Navbar() {
       <div className="navbar-container">
         
         {/* LOGO */}
-        <Link to="/" className="navbar-logo">
-          ✈️ <span style={{ color: '#ffffff' }}>Crazy Travel</span>
+        <Link 
+          to="/" 
+          className="navbar-logo" 
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}
+        >
+          {/* Aquí aumentamos el tamaño cambiando el height a '65px' */}
+          <img 
+            src="/CrazyTravel logo.jpeg" 
+            alt="Crazy Travel Logo" 
+            style={{ height: '65px', width: 'auto', borderRadius: '8px' }} 
+          />
+          <span style={{ color: '#ffffff', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            Crazy Travel
+          </span>
         </Link>
 
         {/* ENLACES Y MENÚ */}
