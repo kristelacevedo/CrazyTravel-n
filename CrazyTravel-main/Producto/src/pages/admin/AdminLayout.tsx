@@ -7,7 +7,6 @@ import { Navigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase'; 
 
 import AdminDashboard from './AdminDashboard';
-import AdminViajes from './AdminViajes';
 import AdminReservas from './AdminReservas';
 
 type ViewType = 'dashboard' | 'viajes' | 'reservas';
@@ -61,7 +60,6 @@ export default function AdminLayout() {
   }
 
   // 🛡️ Si no es administrador, lo pateamos a la página de login
-  // (Asegúrate de que "/auth/login" sea la ruta real de tu inicio de sesión)
   if (isAdmin === false) {
     return <Navigate to="/auth/login" replace />;
   }
@@ -74,7 +72,8 @@ export default function AdminLayout() {
       case 'dashboard':
         return <AdminDashboard />;
       case 'viajes':
-        return <AdminViajes />;
+        // 🚀 CORRECCIÓN: Renderiza el Dashboard (donde tienes la tabla de tours) en lugar de un componente inexistente
+        return <AdminDashboard />; 
       case 'reservas':
         return <AdminReservas />;
       default:
